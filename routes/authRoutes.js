@@ -54,6 +54,10 @@ router.post('/login', async (req, res) => {
   const queryString = `SELECT * FROM users WHERE users.email = '${email}' AND users.password = '${password}'`
   try {
     const { rows } = await db.query(queryString)
+    //add error message
+    if (!rows.length) {
+      throw new Error('Either your email or your password is incorrect')
+    }
     res.json(rows)
   } catch (err) {
     res.json({ error: err.message })
