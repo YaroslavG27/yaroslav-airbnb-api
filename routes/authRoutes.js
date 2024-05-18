@@ -59,6 +59,8 @@ router.post('/login', async (req, res) => {
       throw new Error('Either your email or your password is incorrect')
     }
     res.json(rows)
+    //add log in message
+    res.send('Successfully logged in')
   } catch (err) {
     res.json({ error: err.message })
   }
