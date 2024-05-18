@@ -58,7 +58,7 @@ router.post('/login', async (req, res) => {
     if (!rows.length) {
       throw new Error('Either your email or your password is incorrect')
     }
-    res.json(rows)
+    //res.json(rows) //return user info
     //add log in message
     res.send('Successfully logged in')
   } catch (err) {
