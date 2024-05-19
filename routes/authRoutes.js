@@ -49,18 +49,29 @@ router.post('/signup', async (req, res) => {
 })
 
 router.post('/login', async (req, res) => {
-  const email = req.body.email
-  const password = req.body.password
-  const queryString = `SELECT * FROM users WHERE users.email = '${email}' AND users.password = '${password}'`
+  //find user
   try {
-    const { rows } = await db.query(queryString)
-    //add error message
-    if (!rows.length) {
-      throw new Error('Either your email or your password is incorrect')
+    const { rows } = await db.query(
+      `SELECT * FROM users WHERE email = '${req.body.email}'`
+    )
+    if (rows.lenght === 0) {
+      throw new Error("Email doesn't exist")
     }
-    //res.json(rows) //return user info
-    //add log in message
-    res.send('Successfully logged in')
+    const user = rows[0]
+    //validate password
+    const isPasswordValid = await bcrypt.compare(
+      req.body.password,
+      user.password
+    )
+    if (!isPasswordValid) {
+      throw new Error('Your password is not correct')
+    }
+    //generate the token
+    const token = jwt.sign({ user_id: user.user_id, email: user.email }, secret)
+    //compose response
+    res.cookie('jwt', token, { httpOnly: true, secure: true, sameSite: 'none' })
+    //Respond
+    res.json({ message: 'You are logged in' })
   } catch (err) {
     res.json({ error: err.message })
   }
