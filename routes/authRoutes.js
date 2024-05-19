@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
     const { rows } = await db.query(
       `SELECT * FROM users WHERE email = '${req.body.email}'`
     )
-    if (rows.lenght === 0) {
+    if (!rows.length) {
       throw new Error("Email doesn't exist")
     }
     const user = rows[0]
