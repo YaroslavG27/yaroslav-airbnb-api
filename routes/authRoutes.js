@@ -99,4 +99,44 @@ router.get('/profile', async (req, res) => {
   }
 })
 
+router.patch('/profile', async (req, res) => {
+  try {
+    // Validate Token
+    const decodedToken = jwt.verify(req.cookies.jwt, secret)
+    if (!decodedToken || !decodedToken.user_id || !decodedToken.email) {
+      throw new Error('Invalid authentication token')
+    }
+    // Validate fields
+    if (
+      !req.body.first_name &&
+      !req.body.last_name &&
+      !req.body.email &&
+      !req.body.profile_photo
+    ) {
+      throw new Error('at least 1 field must be modified')
+    }
+    // Update user
+    let query = `UPDATE users SET `
+    if (req.body.first_name) {
+      query += `first_name = '${req.body.first_name}', `
+    }
+    if (req.body.last_name) {
+      query += `last_name = '${req.body.last_name}', `
+    }
+    if (req.body.email) {
+      query += `email = '${req.body.email}', `
+    }
+    if (req.body.profile_photo) {
+      query += `profile_photo = '${req.body.profile_photo}', `
+    }
+    query = query.slice(0, -2)
+    query += `WHERE user_id = ${decodedToken.user_id} RETURNING profile_photo, first_name, last_name, email, user_id`
+    const { rows: userRows } = await db.query(query)
+    // Respond
+    res.json(userRows[0])
+  } catch (err) {
+    res.json({ error: err.message })
+  }
+})
+
 export default router
