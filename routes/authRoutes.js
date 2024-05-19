@@ -82,4 +82,21 @@ router.get('/logout', (req, res) => {
   res.send('You are logged out')
 })
 
+router.get('/profile', async (req, res) => {
+  try {
+    // Validate Token
+    const decodedToken = jwt.verify(req.cookies.jwt, secret)
+    if (!decodedToken || !decodedToken.user_id || !decodedToken.email) {
+      throw new Error('Invalid authentication token')
+    }
+    const { rows: userRows } = await db.query(`
+      SELECT user_id, first_name, last_name, email, profile_photo
+      FROM users WHERE user_id = ${decodedToken.user_id}
+    `)
+    res.json(userRows[0])
+  } catch (err) {
+    res.json({ error: err.message })
+  }
+})
+
 export default router
