@@ -31,18 +31,39 @@ router.post('/reviews', async (req, res) => {
 
 // Define a GET route for fetching the list of reviews
 router.get('/reviews', async (req, res) => {
-  console.log(req.query)
   try {
-    const { house } = req.query
-    const houseSearch = `
-      SELECT * FROM reviews
-      WHERE house_id = $1
+    if (!req.query.house_id) {
+      throw new Error('house_id is required')
+    }
+    let sqlquery = `
+      SELECT reviews.*, users.first_name, users.last_name, users.profile_photo FROM reviews
+      LEFT JOIN users ON users.user_id = reviews.user_id
+      WHERE house_id = ${req.query.house_id}
+      ORDER BY date DESC
     `
-    const { rows } = await db.query(houseSearch, [house])
-    res.json(rows)
+    console.log('sql', sqlquery)
+    let { rows } = await db.query(sqlquery)
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+    let reviews = rows.map((r) => {
+      r.author = {
+        firstName: r.first_name,
+        lastName: r.last_name,
+        profile_photo: r.profile_photo
+      }
+      r.date = formatter.format(new Date(r.date))
+      delete r.first_name
+      delete r.last_name
+      delete r.profile_photo
+      return r
+    })
+    res.json(reviews)
+    console.log('reviews', reviews)
   } catch (err) {
-    console.error(err.message)
-    res.json({ error: 'we are down' })
+    res.json({ error: err.message })
   }
 })
 
