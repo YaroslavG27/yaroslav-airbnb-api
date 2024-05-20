@@ -7,26 +7,62 @@ const router = Router()
 // Define a POST route for creating a list of bookings
 router.post('/bookings', async (req, res) => {
   try {
-    const { house_id, price, arrival_date, departure_date, comment } = req.body
-    const token = req.cookies.jwt
-
-    if (!token) {
+    //Validate token
+    const decodedToken = jwt.verify(req.cookies.jwt, secret)
+    if (!decodedToken || !decodedToken.user_id || !decodedToken.email) {
       throw new Error('Invalid authentication token')
     }
-
-    const decoded = jwt.verify(token, secret)
-
-    const insertBookingQuery = `
-      INSERT INTO bookings (house_id, user_id, price, arrival_date, departure_date, comment)
-      VALUES (${house_id}, ${decoded.user_id}, ${price}, '${arrival_date}', '${departure_date}', '${comment}')
-      RETURNING *
-    `
-
-    const { rows } = await db.query(insertBookingQuery)
+    //Validate fieds
+    let { house_id, arrival_date, departure_date, comment } = req.body
+    if (!house_id || !arrival_date || !departure_date) {
+      throw new Error('House id, arrival date and departure date are required')
+    }
+    //Find house to get price
+    let houseFound = await db.query(
+      `SELECT house_id, nightly_price FROM houses WHERE house_id = ${house_id}`
+    )
+    if (!houseFound.rows.length) {
+      throw new Error(`House id ${house_id} not found`)
+    }
+    const house = houseFound.rows[0]
+    //Calculate total nights
+    let checkingDate = new Date(req.body.arrival_date)
+    let checkOutDate = new Date(req.body.departure_date)
+    if (checkOutDate <= checkingDate) {
+      throw new Error('arrival_date must be before departure_date')
+    }
+    const totalNights = Math.round(
+      (checkOutDate - checkingDate) / (1000 * 60 * 60 * 24)
+    )
+    //Calculate total price
+    const totalPrice = totalNights * house.nightly_price
+    //Create a booking
+    let { rows } = await db.query(
+      `INSERT INTO bookings (house_id, user_id, price, arrival_date, departure_date, comment)
+      VALUES('${house_id}', '${decodedToken.user_id}', ${totalPrice}, '${arrival_date}', '${departure_date}', '${comment}') RETURNING *`
+    )
+    //Respond
     res.json(rows[0])
   } catch (err) {
     res.json({ error: err.message })
   }
+  // try {
+  //   const { house_id, price, arrival_date, departure_date, comment } = req.body
+  //   const token = req.cookies.jwt
+  //   if (!token) {
+  //     throw new Error('Invalid authentication token')
+  //   }
+  //   const decoded = jwt.verify(token, secret)
+  //   const insertBookingQuery = `
+  //     INSERT INTO bookings (house_id, user_id, price, arrival_date, departure_date, comment)
+  //     VALUES (${house_id}, ${decoded.user_id}, ${price}, '${arrival_date}', '${departure_date}', '${comment}')
+  //     RETURNING *
+  //   `
+  //   const { rows } = await db.query(insertBookingQuery)
+  //   res.json(rows[0])
+  // } catch (err) {
+  //   res.json({ error: err.message })
+  // }
 })
 
 // Define a GET route for fetching the list of bookings
