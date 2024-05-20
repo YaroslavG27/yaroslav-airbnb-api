@@ -6,6 +6,7 @@ import housesRouters from './routes/housesRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import usersRoutes from './routes/userRoutes.js'
 import cookieParser from 'cookie-parser'
+import 'dotenv/config'
 
 // start app
 const app = express()

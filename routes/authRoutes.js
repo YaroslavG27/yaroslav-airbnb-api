@@ -3,7 +3,7 @@ import db from '../db.js'
 const router = Router()
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { secret } from '../secrets.js'
+const secret = process.env.secret
 
 router.post('/signup', async (req, res) => {
   //1. Check if the new user is not registered

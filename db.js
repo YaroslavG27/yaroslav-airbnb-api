@@ -1,6 +1,10 @@
 // db.js
 import pg from 'pg'
-import { DBURL } from './secrets.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const DBURL = process.env.DBURL
 
 const { Pool } = pg
 
