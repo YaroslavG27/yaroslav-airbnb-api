@@ -43,7 +43,6 @@ router.get('/photos', async (req, res) => {
       SELECT * FROM photos
     `
     const { rows } = await db.query(houseSearch)
-    console.log(houseSearch)
     res.json(rows)
   } catch (err) {
     console.error(err.message)
