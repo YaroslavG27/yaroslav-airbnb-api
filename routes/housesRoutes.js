@@ -169,4 +169,37 @@ router.get('/locations', async (req, res) => {
   }
 })
 
+router.get('/listings', async (req, res) => {
+  try {
+    // Validate Token
+    const decodedToken = jwt.verify(req.cookies.jwt, secret)
+    if (!decodedToken || !decodedToken.user_id || !decodedToken.email) {
+      throw new Error('Invalid authentication token')
+    }
+    // Get houses
+    let query = `
+      SELECT
+        houses.house_id,
+        houses.location,
+        houses.bedrooms,
+        houses.bathrooms,
+        houses.reviews_count,
+        houses.rating,
+        houses.nightly_price AS price,
+        photos.url
+      FROM houses
+      LEFT JOIN (
+          SELECT DISTINCT ON (house_id) house_id, url
+          FROM photos
+      ) AS photos ON photos.house_id = houses.house_id
+      WHERE houses.host_id = ${decodedToken.user_id}
+    `
+    let { rows } = await db.query(query)
+    // Respond
+    res.json(rows)
+  } catch (err) {
+    res.json({ error: err.message })
+  }
+})
+
 export default router
