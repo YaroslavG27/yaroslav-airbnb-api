@@ -117,11 +117,12 @@ router.patch('/houses/:house_id', async (req, res) => {
     if (queryString.endsWith(', ')) {
       queryString = queryString.slice(0, -2)
     }
-    console.log(queryString)
+
     const rows = await db.query(
-      (queryString = queryString + ` WHERE house_id = ${req.params.house_id}`)
+      (queryString =
+        queryString + ` WHERE house_id = ${req.params.house_id} RETURNING *`)
     )
-    res.json(rows)
+    res.json(rows.rows[0])
   } catch (error) {
     res.json({ error: error.message })
   }
