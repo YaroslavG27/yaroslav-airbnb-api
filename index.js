@@ -7,9 +7,17 @@ import authRoutes from './routes/authRoutes.js'
 import usersRoutes from './routes/userRoutes.js'
 import cookieParser from 'cookie-parser'
 import 'dotenv/config'
+import cors from 'cors'
 
 // start app
 const app = express()
+app.use(
+  cors({
+    origin: true,
+    credentials: true
+  })
+)
+app.options('*', cors())
 
 // middleware
 app.use(express.json())
