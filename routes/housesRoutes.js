@@ -33,8 +33,7 @@ router.post('/houses', async (req, res) => {
 // Route to access all houses data
 router.get('/houses', async (req, res) => {
   // Sample data for houses
-  let queryString = `SELECT * FROM (SELECT DISTINCT ON (houses.house_id) houses.*, photos.url FROM houses 
-  LEFT JOIN photos ON houses.house_id = photos.house_id`
+  let queryString = `SELECT * FROM (SELECT DISTINCT ON (houses.house_id) houses.*, photos.url FROM houses LEFT JOIN photos ON houses.house_id = photos.house_id`
 
   try {
     if (
@@ -64,9 +63,11 @@ router.get('/houses', async (req, res) => {
     if (queryString.endsWith('AND')) {
       queryString = queryString.slice(0, -4)
     }
-
+    queryString += `) AS distinct_houses`
+    console.log('query-->', queryString)
     const result = await db.query(queryString)
 
+    console.log('respuesta->', result.rows)
     res.json(result.rows)
   } catch (err) {
     res.json({ error: err.message })
