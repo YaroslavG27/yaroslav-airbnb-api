@@ -33,7 +33,8 @@ router.post('/houses', async (req, res) => {
 // Route to access all houses data
 router.get('/houses', async (req, res) => {
   // Sample data for houses
-  let queryString = 'SELECT * FROM houses'
+  let queryString = `SELECT * FROM (SELECT DISTINCT ON (houses.house_id) houses.*, photos.url FROM houses 
+  LEFT JOIN photos ON houses.house_id = photos.house_id`
 
   try {
     if (
