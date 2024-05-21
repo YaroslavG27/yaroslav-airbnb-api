@@ -11,7 +11,7 @@ router.post('/reviews', async (req, res) => {
     const token = req.cookies.jwt
 
     if (!token) {
-      throw new Error('Invalid authentication tokenen')
+      throw new Error('Invalid authentication token')
     }
 
     const decoded = jwt.verify(token, secret)
