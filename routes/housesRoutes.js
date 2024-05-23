@@ -56,14 +56,15 @@ router.get('/houses', async (req, res) => {
     if (req.query.min_rooms) {
       queryString += ` houses.bedrooms >= '${req.query.min_rooms}' AND`
     }
-    if (req.query.sort && req.query.order) {
-      queryString += ` ORDER BY houses.${req.query.sort} ${req.query.order}`
-    }
-
     if (queryString.endsWith('AND')) {
       queryString = queryString.slice(0, -4)
     }
     queryString += `) AS distinct_houses`
+    if (req.query.sort === 'rooms') {
+      queryString += ` ORDER BY bedrooms DESC`
+    } else {
+      queryString += ` ORDER BY nightly_price ASC`
+    }
     console.log('query-->', queryString)
     const result = await db.query(queryString)
 
