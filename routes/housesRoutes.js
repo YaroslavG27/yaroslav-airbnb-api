@@ -76,21 +76,31 @@ router.get('/houses', async (req, res) => {
 })
 // Route to access data of a specific house (house_id = 1)
 router.get('/houses/:house_id', async (req, res) => {
-  // Sample data for a specific house
-  const numbId = Number(req.params.house_id)
   try {
-    if (!numbId) {
-      throw new Error(`house id most be a number`)
-    }
     const result = await db.query(
-      `SELECT * FROM houses WHERE houses.house_id = ${numbId}`
+      `SELECT * FROM houses WHERE houses.house_id = ${req.params.house_id}`
     )
-    // Send the specific house data as JSON response
-    let resultArr = result.rows
-    if (!resultArr.length) {
+    if (!result.rows[0]) {
       throw new Error(`Sorry, house not found`)
     }
-    res.json(resultArr[0])
+
+    let house = result.rows[0]
+    let { rows: hostRows } = await db.query(
+      `SELECT user_id, profile_photo, first_name, last_name FROM users WHERE user_id = ${house.host_id}`
+    )
+    house.host = {
+      user_id: hostRows[0].user_id,
+      profile_photo: hostRows[0].profile_photo,
+      firstName: hostRows[0].first_name,
+      lastName: hostRows[0].last_name
+    }
+
+    let { rows: photosRows } = await db.query(
+      `SELECT * FROM photos WHERE house_id = ${house.house_id}`
+    )
+    house.images = photosRows.map((p) => p.url)
+    delete house.user_id
+    res.json(house)
   } catch (err) {
     res.json({ error: err.message })
   }
