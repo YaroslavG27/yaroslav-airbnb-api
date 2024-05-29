@@ -198,7 +198,7 @@ router.get('/listings', async (req, res) => {
         houses.bathrooms,
         houses.reviews_count,
         houses.rating,
-        houses.nightly_price AS price,
+        houses.nightly_price,
         photos.url
       FROM houses
       LEFT JOIN (
