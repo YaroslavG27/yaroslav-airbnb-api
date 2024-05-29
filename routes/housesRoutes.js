@@ -7,16 +7,22 @@ const router = Router()
 // Post router
 router.post('/houses', async (req, res) => {
   try {
-    const { location, bedrooms, bathrooms, nightly_price, description } =
-      req.body
+    const {
+      location,
+      bedrooms,
+      bathrooms,
+      nightly_price,
+      description,
+      photos
+    } = req.body
     const token = req.cookies.jwt
 
     if (!token) {
       throw new Error('Invalid authentication token')
     }
 
-    const decoded = jwt.verify(token, secret)
-
+    const decodedToken = jwt.verify(token, secret)
+    console.log('decodesdToken---->', decodedToken)
     // Create house
     let houseCreated = await db.query(`
       INSERT INTO houses (location, bedrooms, bathrooms, nightly_price, description, host_id)
@@ -218,6 +224,7 @@ router.get('/listings', async (req, res) => {
   try {
     // Validate Token
     const decodedToken = jwt.verify(req.cookies.jwt, secret)
+    console.log('decoded token on get---->', decodedToken)
     if (!decodedToken || !decodedToken.user_id || !decodedToken.email) {
       throw new Error('Invalid authentication token')
     }
