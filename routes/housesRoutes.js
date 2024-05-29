@@ -17,14 +17,46 @@ router.post('/houses', async (req, res) => {
 
     const decoded = jwt.verify(token, secret)
 
-    const insertHouseQuery = `
+    // Create house
+    let houseCreated = await db.query(`
       INSERT INTO houses (location, bedrooms, bathrooms, nightly_price, description, host_id)
-      VALUES ('${location}', ${bedrooms}, ${bathrooms}, ${nightly_price}, '${description}', ${decoded.user_id})
+      VALUES ('${location}', '${bedrooms}', '${bathrooms}', '${nightly_price}', '${description}', '${decodedToken.user_id}')
       RETURNING *
-    `
+    `)
+    let house = houseCreated.rows[0]
+    // Create photos
+    let photosQuery = 'INSERT INTO photos (url, house_id) VALUES '
+    photos.forEach((p, i) => {
+      if (i === photos.length - 1) {
+        photosQuery += `('${p}', ${house.house_id}) `
+      } else {
+        photosQuery += `('${p}', ${house.house_id}), `
+      }
+    })
+    photosQuery += 'RETURNING *'
+    let photosCreated = await db.query(photosQuery)
+    // Compose response
+    house.photo = photosCreated.rows[0].photo
+    house.reviews = 0
+    house.rating = 0
+    // Respond
+    // Retrieve the house data along with distinct pic_urls
+    let result = await db.query(`
+  SELECT DISTINCT h.*, p.url
+  FROM houses h
+  LEFT JOIN photos p ON h.house_id = p.house_id
+  WHERE h.house_id = ${house.house_id}
+`)
+    let houseWithPhotos = result.rows[0]
+    res.json(houseWithPhotos)
+    // const insertHouseQuery = `
+    //   INSERT INTO houses (location, bedrooms, bathrooms, nightly_price, description, host_id)
+    //   VALUES ('${location}', ${bedrooms}, ${bathrooms}, ${nightly_price}, '${description}', ${decoded.user_id})
+    //   RETURNING *
+    // `
 
-    const result = await db.query(insertHouseQuery)
-    res.json(result.rows[0])
+    // const result = await db.query(insertHouseQuery)
+    // res.json(result.rows[0])
   } catch (err) {
     res.json({ error: err.message })
   }
