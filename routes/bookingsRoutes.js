@@ -38,8 +38,8 @@ router.post('/bookings', async (req, res) => {
     const totalPrice = totalNights * house.nightly_price
     //Create a booking
     let { rows } = await db.query(
-      `INSERT INTO bookings (house_id, user_id, price, arrival_date, departure_date, comment)
-      VALUES('${house_id}', '${decodedToken.user_id}', ${totalPrice}, '${arrival_date}', '${departure_date}', '${comment}') RETURNING *`
+      `INSERT INTO bookings (house_id, user_id, price, arrival_date, departure_date, comment, total_night)
+      VALUES('${house_id}', '${decodedToken.user_id}', ${totalPrice}, '${arrival_date}', '${departure_date}', '${comment}', ${totalNights}) RETURNING *`
     )
     //Respond
     res.json(rows[0])
@@ -79,9 +79,28 @@ router.get('/bookings', async (req, res) => {
     const user_id = decoded.user_id
 
     const userSearch = `
-      SELECT * FROM bookings
-      WHERE user_id = '${user_id}'
-      ORDER BY arrival_date DESC
+      SELECT
+        bookings.booking_id,
+        TO_CHAR(bookings.arrival_date, 'DD Mon YYYY') AS arrival_date,
+    TO_CHAR(bookings.departure_date, 'DD Mon YYYY') AS departure_date,
+        bookings.price,
+        bookings.total_night,
+        houses.house_id,
+        houses.location,
+        houses.bedrooms,
+        houses.bathrooms,
+        houses.reviews_count,
+        houses.nightly_price,
+        houses.rating,
+        photos.url
+      FROM bookings
+      LEFT JOIN houses ON houses.house_id = bookings.house_id
+      LEFT JOIN (
+          SELECT DISTINCT ON (house_id) house_id, url
+          FROM photos
+      ) AS photos ON photos.house_id = houses.house_id
+      WHERE bookings.user_id = ${user_id}
+      ORDER BY bookings.arrival_date DESC
     `
 
     const { rows } = await db.query(userSearch)
