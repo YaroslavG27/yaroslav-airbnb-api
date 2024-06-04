@@ -173,6 +173,46 @@ router.patch('/houses/:house_id', async (req, res) => {
       (queryString =
         queryString + ` WHERE house_id = ${req.params.house_id} RETURNING *`)
     )
+    //update pictures table
+    console.log('req body pics', req.body.images)
+    let pictures = req.body.images
+    if (pictures && pictures.length) {
+      // Fetch existing pictures for the house
+      let getExistingPictures = await db.query(
+        `SELECT * FROM photos WHERE house_id = ${req.params.house_id}`
+      )
+      //if there's no existing picture
+      if (getExistingPictures.rowCount === 0) {
+        const insertPictures = (pictures) => {
+          for (let i = 0; i < pictures.length; i++) {
+            pictures[i] = `('${pictures[i]}', ${req.params.house_id})`
+          }
+          let picturesString = pictures.join(', ')
+          return picturesString
+        }
+        const updatePictures = insertPictures(pictures)
+        const insertImagesQuery = `INSERT INTO photos (url, house_id) VALUES ${updatePictures}`
+
+        await db.query(insertImagesQuery)
+      }
+      let oldPictures = getExistingPictures.rows
+      //if there're existed images
+      const replaceUrl = (oldPictures, picture) => {
+        for (let i = 0; i < oldPictures.length && i < picture.length; i++) {
+          oldPictures[i].url = pictures[i]
+        }
+        return oldPictures
+      }
+      let newPictures = replaceUrl(oldPictures, pictures)
+      for (const p of newPictures) {
+        await db.query(`UPDATE photos SET url = $1 WHERE photo_id = $2`, [
+          p.url,
+          p.photo_id
+        ])
+      }
+    }
+    // Send the response
+    // res.json(house)
     res.json(rows.rows[0])
   } catch (error) {
     res.json({ error: error.message })
