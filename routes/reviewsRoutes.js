@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router, query } from 'express'
 import db from '../db.js'
 import jwt from 'jsonwebtoken'
 const secret = process.env.secret
@@ -7,7 +7,7 @@ const router = Router()
 // Post to reviews data
 router.post('/reviews', async (req, res) => {
   try {
-    const { user_id, house_id, rating, content, date } = req.body
+    const { house_id, rating, content } = req.body
     const token = req.cookies.jwt
 
     if (!token) {
@@ -16,12 +16,15 @@ router.post('/reviews', async (req, res) => {
 
     const decoded = jwt.verify(token, secret)
 
+    //Get current date in 'YYYY-MM-DD' format
+    const date = new Date().toISOString().split('T')[0]
+
     const queryString = `
       INSERT INTO reviews (user_id, house_id, rating, content, date)
       VALUES (${decoded.user_id}, ${house_id}, ${rating}, '${content}', '${date}')
       RETURNING *
     `
-
+    console.log('string----> ', queryString)
     const { rows } = await db.query(queryString)
     res.json(rows[0])
   } catch (err) {
