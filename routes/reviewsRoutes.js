@@ -24,7 +24,7 @@ router.post('/reviews', async (req, res) => {
       VALUES (${decoded.user_id}, ${house_id}, ${rating}, '${content}', '${date}')
       RETURNING *
     `
-    console.log('string----> ', queryString)
+
     const { rows } = await db.query(queryString)
     res.json(rows[0])
   } catch (err) {
@@ -44,7 +44,7 @@ router.get('/reviews', async (req, res) => {
       WHERE house_id = ${req.query.house_id}
       ORDER BY date DESC
     `
-    console.log('sql', sqlquery)
+
     let { rows } = await db.query(sqlquery)
     const formatter = new Intl.DateTimeFormat('en-US', {
       day: '2-digit',
@@ -64,7 +64,6 @@ router.get('/reviews', async (req, res) => {
       return r
     })
     res.json(reviews)
-    console.log('reviews', reviews)
   } catch (err) {
     res.json({ error: err.message })
   }
